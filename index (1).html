@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hyderabad Air Quality</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --accent: #fbbf24; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; color: #f1f5f9;
+    font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+    background:
+      radial-gradient(900px 520px at 12% -8%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 62%),
+      radial-gradient(700px 480px at 100% 8%, rgba(99,102,241,0.28), transparent 60%),
+      #0b1220;
+    background-attachment: fixed;
+    transition: background 0.6s;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 28px 18px 40px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
+  .brand { font-weight: 700; font-size: 20px; letter-spacing: 0.2px; }
+  .brand span { color: var(--accent); }
+  .live { font-size: 12px; color: #cbd5e1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+          padding: 6px 12px; border-radius: 999px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 0 rgba(52,211,153,0.7); animation: pulse 2s infinite; }
+  @keyframes pulse { 70% { box-shadow: 0 0 0 8px rgba(52,211,153,0); } 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); } }
+
+  .card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.11); border-radius: 24px;
+          padding: 24px; margin-bottom: 18px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+          box-shadow: 0 10px 40px rgba(0,0,0,0.25); }
+  .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 1.6px; color: #94a3b8; margin: 0 0 8px; }
+
+  .hero { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .hero-text { flex: 1 1 280px; }
+  .level { font-size: 36px; line-height: 1.15; font-weight: 700; margin: 0 0 10px; }
+  .tip { font-size: 16px; color: #cbd5e1; margin: 0; max-width: 420px; }
+  .gauge { position: relative; width: 150px; height: 150px; flex: 0 0 auto; }
+  .gauge svg { transform: rotate(-90deg); }
+  .gauge .num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .gauge .num b { font-size: 36px; font-weight: 700; line-height: 1; }
+  .gauge .num small { font-size: 11px; color: #94a3b8; letter-spacing: 1.2px; margin-top: 4px; }
+
+  .chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 22px; }
+  .chip { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 12px 14px; }
+  .chip .k { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 4px; }
+  .chip .v { font-size: 17px; font-weight: 600; margin: 0; }
+  .chip .s { font-size: 12px; color: #94a3b8; margin: 2px 0 0; }
+
+  .picker { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  .picker button { font-family: inherit; font-size: 15px; color: #f1f5f9; cursor: pointer;
+          background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.14); border-radius: 12px; padding: 9px 14px; transition: background 0.2s; }
+  .picker button:hover { background: rgba(255,255,255,0.18); }
+  .picker button:disabled { opacity: 0.35; cursor: not-allowed; }
+  .picker input[type=date] { font-family: inherit; font-size: 15px; color: #f1f5f9; color-scheme: dark;
+          background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.14); border-radius: 12px; padding: 8px 12px; }
+  .daytitle { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 4px; }
+  .daytitle h2 { font-size: 24px; margin: 0; font-weight: 700; }
+  .badge { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,0.12); color: #e2e8f0; }
+  .badge.forecast { background: rgba(99,102,241,0.35); }
+  .summary { color: #cbd5e1; margin: 6px 0 16px; }
+  .pills { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .pill { font-size: 13px; padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); }
+  .pill b { color: var(--accent); font-weight: 600; }
+
+  .chartwrap { position: relative; }
+  canvas { width: 100%; height: 300px; display: block; }
+  #tip { position: absolute; pointer-events: none; display: none; background: rgba(11,18,32,0.95); border: 1px solid rgba(255,255,255,0.18);
+         padding: 8px 12px; border-radius: 12px; font-size: 13px; white-space: nowrap; transform: translate(-50%, -110%); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: #94a3b8; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .note { font-size: 13px; color: #94a3b8; margin: 12px 0 0; }
+  footer { text-align: center; font-size: 12px; color: #64748b; margin-top: 26px; }
+  @media (max-width: 520px) { .level { font-size: 28px; } .gauge { width: 120px; height: 120px; } .gauge svg { width: 120px; height: 120px; } .card { padding: 18px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">Hyderabad <span>Air</span></div>
+    <div class="live"><span class="dot"></span><span id="updated">Live data</span></div>
+  </header>
+
+  <section class="card">
+    <p class="eyebrow">Right now</p>
+    <div class="hero">
+      <div class="hero-text">
+        <h1 class="level" id="nowLabel">Loading...</h1>
+        <p class="tip" id="nowTip"></p>
+      </div>
+      <div class="gauge">
+        <svg width="150" height="150" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="10"></circle>
+          <circle id="ring" cx="60" cy="60" r="52" fill="none" stroke="#fbbf24" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 327" style="transition: stroke-dasharray 0.8s, stroke 0.6s"></circle>
+        </svg>
+        <div class="num"><b id="nowScore">-</b><small>AIR SCORE</small></div>
+      </div>
+    </div>
+    <div class="chips">
+      <div class="chip"><p class="k">Fine dust (PM2.5)</p><p class="v" id="pm25Word">-</p><p class="s" id="pm25Val"></p></div>
+      <div class="chip"><p class="k">Coarse dust (PM10)</p><p class="v" id="pm10Word">-</p><p class="s" id="pm10Val"></p></div>
+      <div class="chip"><p class="k">Best time today</p><p class="v" id="bestToday">-</p><p class="s">for a walk or run</p></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <p class="eyebrow">Pick a day</p>
+    <div class="picker">
+      <button id="prev" aria-label="Previous day">&larr; Before</button>
+      <input type="date" id="day">
+      <button id="next" aria-label="Next day">After &rarr;</button>
+      <button id="todayBtn">Today</button>
+    </div>
+    <div class="daytitle"><h2 id="dayName"></h2><span class="badge" id="dayBadge"></span></div>
+    <p class="summary" id="daySummary"></p>
+    <div class="pills" id="dayPills"></div>
+    <div class="chartwrap"><canvas id="chart"></canvas><div id="tip"></div></div>
+    <div class="legend">
+      <span><i style="background:#34d399"></i>Good</span>
+      <span><i style="background:#fbbf24"></i>Moderate</span>
+      <span><i style="background:#fb923c"></i>Unhealthy for sensitive people</span>
+      <span><i style="background:#f87171"></i>Unhealthy</span>
+    </div>
+    <p class="note" id="dayNote"></p>
+  </section>
+
+  <footer>Data from Open-Meteo &middot; Collected hourly with Python on AWS &middot; Forecasts are predictions, not measurements</footer>
+</div>
+
+<script>
+const levels = [
+  { max: 50,  name: "Good",     emoji: "🟢", tip: "Fresh air. A great time to be outdoors.", color: "#34d399", band: "rgba(52,211,153,0.13)" },
+  { max: 100, name: "Moderate", emoji: "🟡", tip: "Fine for most people. If you have asthma or breathing trouble, take it easy outside.", color: "#fbbf24", band: "rgba(251,191,36,0.13)" },
+  { max: 150, name: "Unhealthy for sensitive people", emoji: "🟠", tip: "Children, older people and anyone with asthma should limit time outside.", color: "#fb923c", band: "rgba(251,146,60,0.14)" },
+  { max: Infinity, name: "Unhealthy", emoji: "🔴", tip: "Everyone should cut down on outdoor activity today.", color: "#f87171", band: "rgba(248,113,113,0.15)" }
+];
+const levelOf = a => levels.find(l => a <= l.max);
+const hourName = h => (h % 12 || 12) + (h < 12 ? " am" : " pm");
+const hourOf = r => parseInt(r.time.slice(11, 13));
+const keyOf = r => r.time.replace("T", " ").slice(0, 13);
+
+function dustWord(v, cuts) {
+  if (v <= cuts[0]) return "Low";
+  if (v <= cuts[1]) return "Moderate";
+  if (v <= cuts[2]) return "High";
+  return "Very high";
+}
+function addDays(s, n) {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+function prettyDate(s) {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+}
+function nowKeyIST() {
+  return new Date().toLocaleString("sv-SE", { timeZone: "Asia/Kolkata" }).slice(0, 13);
+}
+
+let data = [], nowKey = "", minDay = "", maxDay = "", current = [], hover = -1, geo = null;
+
+function setAccent(c) { document.documentElement.style.setProperty("--accent", c); }
+
+function showNow() {
+  const past = data.filter(r => keyOf(r) <= nowKey);
+  const r = past[past.length - 1];
+  const l = levelOf(r.aqi);
+  setAccent(l.color);
+  document.getElementById("nowLabel").textContent = l.name + " " + l.emoji;
+  document.getElementById("nowTip").textContent = l.tip;
+  document.getElementById("nowScore").textContent = r.aqi;
+  const ring = document.getElementById("ring");
+  ring.style.stroke = l.color;
+  ring.style.strokeDasharray = (Math.min(r.aqi / 200, 1) * 327) + " 327";
+  document.getElementById("pm25Word").textContent = dustWord(r.pm25, [12, 35.4, 55.4]);
+  document.getElementById("pm25Val").textContent = r.pm25 + " \u00b5g/m\u00b3";
+  document.getElementById("pm10Word").textContent = dustWord(r.pm10, [54, 154, 254]);
+  document.getElementById("pm10Val").textContent = r.pm10 + " \u00b5g/m\u00b3";
+  const today = data.filter(x => x.time.startsWith(nowKey.slice(0, 10)) && hourOf(x) >= 5 && hourOf(x) <= 21);
+  if (today.length) {
+    const best = today.reduce((a, b) => (b.aqi < a.aqi ? b : a));
+    document.getElementById("bestToday").textContent = "Around " + hourName(hourOf(best));
+  }
+  document.getElementById("updated").textContent = "Latest reading: " + hourName(hourOf(r));
+}
+
+function showDay(dateStr) {
+  const rows = data.filter(r => r.time.startsWith(dateStr));
+  if (!rows.length) return;
+  current = rows; hover = -1;
+  const today = nowKey.slice(0, 10);
+  const avg = rows.reduce((s, r) => s + r.aqi, 0) / rows.length;
+  const l = levelOf(avg);
+  const worst = rows.reduce((a, b) => (b.aqi > a.aqi ? b : a));
+  const dayTime = rows.filter(r => hourOf(r) >= 5 && hourOf(r) <= 21);
+  const best = (dayTime.length ? dayTime : rows).reduce((a, b) => (b.aqi < a.aqi ? b : a));
+
+  document.getElementById("dayName").textContent = prettyDate(dateStr);
+  const badge = document.getElementById("dayBadge");
+  badge.textContent = dateStr > today ? "Forecast" : dateStr === today ? "Today" : "Past";
+  badge.className = "badge" + (dateStr > today ? " forecast" : "");
+  document.getElementById("daySummary").textContent = "Overall the air was " + l.name.toLowerCase() + " " + l.emoji + (dateStr > today ? " (expected)." : ".");
+  document.getElementById("dayPills").innerHTML =
+    '<div class="pill">Best time to go out: <b>' + hourName(hourOf(best)) + '</b></div>' +
+    '<div class="pill">Most polluted: <b>' + hourName(hourOf(worst)) + '</b></div>';
+  document.getElementById("dayNote").textContent =
+    dateStr > today ? "This day is a forecast, so the real air may differ." :
+    dateStr === today ? "Solid line = readings so far. Dashed line = forecast for the rest of today." :
+    "These are past readings. Hover or touch the chart to see each hour.";
+
+  document.getElementById("prev").disabled = dateStr <= minDay;
+  document.getElementById("next").disabled = dateStr >= maxDay;
+  document.getElementById("day").value = dateStr;
+  drawChart();
+}
+
+function drawChart() {
+  const rows = current;
+  if (!rows.length) return;
+  const canvas = document.getElementById("chart");
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = { l: 38, r: 12, t: 14, b: 30 };
+  const top = Math.max(150, Math.max(...rows.map(r => r.aqi)) + 10);
+  const x = h => pad.l + (h / 23) * (W - pad.l - pad.r);
+  const y = v => H - pad.b - (v / top) * (H - pad.t - pad.b);
+  const avg = rows.reduce((s, r) => s + r.aqi, 0) / rows.length;
+  const accent = levelOf(avg).color;
+
+  let from = 0;
+  levels.forEach(l => {
+    const to = Math.min(l.max, top);
+    if (from < top) {
+      ctx.fillStyle = l.band;
+      ctx.fillRect(pad.l, y(to), W - pad.l - pad.r, y(from) - y(to));
+    }
+    from = l.max;
+  });
+
+  ctx.font = "11px Poppins, Arial"; ctx.fillStyle = "#94a3b8";
+  for (let h = 0; h < 24; h += 3) ctx.fillText(hourName(h), x(h) - 12, H - 9);
+  [0, 50, 100, 150].forEach(v => { if (v <= top) ctx.fillText(v, 6, y(v) + 4); });
+
+  const pts = rows.map(r => ({ h: hourOf(r), v: r.aqi, fc: keyOf(r) > nowKey }));
+  const grad = ctx.createLinearGradient(0, pad.t, 0, H - pad.b);
+  grad.addColorStop(0, accent + "66"); grad.addColorStop(1, accent + "00");
+  ctx.beginPath(); ctx.moveTo(x(pts[0].h), y(0));
+  pts.forEach(p => ctx.lineTo(x(p.h), y(p.v)));
+  ctx.lineTo(x(pts[pts.length - 1].h), y(0)); ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+
+  ctx.lineWidth = 3; ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.strokeStyle = accent;
+  for (let i = 1; i < pts.length; i++) {
+    ctx.setLineDash(pts[i].fc ? [7, 6] : []);
+    ctx.beginPath(); ctx.moveTo(x(pts[i - 1].h), y(pts[i - 1].v)); ctx.lineTo(x(pts[i].h), y(pts[i].v)); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  if (rows[0].time.startsWith(nowKey.slice(0, 10))) {
+    const nh = parseInt(nowKey.slice(11, 13));
+    ctx.strokeStyle = "rgba(255,255,255,0.55)"; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+    ctx.beginPath(); ctx.moveTo(x(nh), pad.t); ctx.lineTo(x(nh), H - pad.b); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = "#f1f5f9"; ctx.fillText("Now", x(nh) + 5, pad.t + 10);
+  }
+  if (hover >= 0 && pts[hover]) {
+    const p = pts[hover];
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x(p.h), y(p.v), 6, 0, 7); ctx.fill();
+    ctx.fillStyle = accent; ctx.beginPath(); ctx.arc(x(p.h), y(p.v), 3.5, 0, 7); ctx.fill();
+  }
+  geo = { x, y, pad, W, pts };
+}
+
+function onMove(clientX) {
+  if (!geo) return;
+  const canvas = document.getElementById("chart");
+  const rect = canvas.getBoundingClientRect();
+  const mx = clientX - rect.left;
+  const idx = Math.max(0, Math.min(current.length - 1, Math.round(((mx - geo.pad.l) / (geo.W - geo.pad.l - geo.pad.r)) * 23)));
+  hover = idx;
+  drawChart();
+  const r = current[idx], l = levelOf(r.aqi), p = geo.pts[idx];
+  const tip = document.getElementById("tip");
+  tip.style.display = "block";
+  tip.style.left = geo.x(p.h) + "px"; tip.style.top = geo.y(p.v) + "px";
+  tip.innerHTML = "<b>" + hourName(hourOf(r)) + "</b> &middot; " + l.name + " " + l.emoji + "<br><span style='color:#94a3b8'>Score " + r.aqi + (p.fc ? " (forecast)" : "") + "</span>";
+}
+function onLeave() { hover = -1; document.getElementById("tip").style.display = "none"; drawChart(); }
+
+const cv = document.getElementById("chart");
+cv.addEventListener("mousemove", e => onMove(e.clientX));
+cv.addEventListener("mouseleave", onLeave);
+cv.addEventListener("touchmove", e => { onMove(e.touches[0].clientX); }, { passive: true });
+cv.addEventListener("touchend", onLeave);
+
+fetch("data.json")
+  .then(r => r.json())
+  .then(d => {
+    data = d;
+    nowKey = nowKeyIST();
+    minDay = data[0].time.slice(0, 10);
+    maxDay = data[data.length - 1].time.slice(0, 10);
+    const picker = document.getElementById("day");
+    picker.min = minDay; picker.max = maxDay;
+    picker.addEventListener("change", () => showDay(picker.value));
+    document.getElementById("prev").onclick = () => showDay(addDays(picker.value, -1));
+    document.getElementById("next").onclick = () => showDay(addDays(picker.value, 1));
+    document.getElementById("todayBtn").onclick = () => showDay(nowKey.slice(0, 10));
+    showNow();
+    showDay(nowKey.slice(0, 10));
+  })
+  .catch(() => { document.getElementById("nowLabel").textContent = "Could not load data."; });
+window.addEventListener("resize", drawChart);
+</script>
+</body>
+</html>
